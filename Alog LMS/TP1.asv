@@ -1,0 +1,123 @@
+clc ;
+clear all ;
+
+%%
+% --Génération de signaux test-- 
+
+N = 1000;  % Number of samples
+x = randn(N, 1);  % White noise
+h = [1; 0.3; -0.1; 0.2];  % Impulse response of filter
+d = filter(h, 1, x);  % Output signal
+
+% Affichage des signaux
+figure;
+subplot(2, 1, 1);
+plot(x);
+title('Signal d''entrée (bruit blanc)');
+xlabel('Échantillons');
+ylabel('Amplitude');
+
+subplot(2, 1, 2);
+plot(d);
+title('Signal de sortie après filtrage');
+xlabel('Échantillons');
+ylabel('Amplitude');
+
+%%
+
+P = 4;  % Filter order
+mu = 0.01;  % Step-size
+[w, y, e] = algolms(x, d, P, mu);
+
+% Plot signals
+% figure;
+% plot(1:N, d, 'b', 1:N, y, 'r', 1:N, e, 'g');
+% legend('Desired Signal', 'Output Signal', 'Error Signal');
+% xlabel('Time'); ylabel('Amplitude'); 
+% title('LMS Algorithm Signals');
+
+% Create figure with 3 subplots
+figure;
+
+% First subplot: Desired Signal
+subplot(3,1,1);  % 3 rows, 1 column, 1st plot
+plot(1:N, d, 'b');
+legend('Desired Signal');
+xlabel('Time'); ylabel('Amplitude'); 
+title('Desired Signal');
+
+% Second subplot: Output Signal
+subplot(3,1,2);  % 3 rows, 1 column, 2nd plot
+plot(1:N, y, 'r');
+legend('Output Signal');
+xlabel('Time'); ylabel('Amplitude'); 
+title('Output Signal');
+
+% Third subplot: Error Signal
+subplot(3,1,3);  % 3 rows, 1 column, 3rd plot
+plot(1:N, e, 'g');
+legend('Error Signal');
+xlabel('Time'); ylabel('Amplitude'); 
+title('Error Signal');
+
+
+% Plot true and estimated filter coefficients
+figure;
+plot(1:P, h, 'bo-', 1:P, w(:, end), 'rx-');
+legend('True Coefficients', 'Estimated Coefficients');
+xlabel('Coefficient Index'); ylabel('Amplitude'); 
+title('LMS Filter Coefficients');
+%%
+noise = 0.05 * randn(N, 1);  % Add noise
+d_noisy = d + noise;
+
+% Test for different filter lengths and step sizes
+P_values = [5, 10, 20];
+mu_values = [0.01, 0.1, 0.5];
+
+for P = P_values
+    for mu = mu_values
+        [w, y, e] = algolms(x, d_noisy, P, mu);
+        figure;
+        plot(1:N, e);
+        title(['Error Signal for P = ', num2str(P), ', \mu = ', num2str(mu)]);
+        xlabel('Time'); ylabel('Error');
+    end
+end
+
+%%
+% Load voice signal
+[y, Fs] = audioread('Voix1.wav');
+sound(y, Fs);  % Listen to the original voice signal
+
+% Load room impulse response and filter the signal
+load Rep.dat;  % Assuming Rep.dat contains the room impulse response
+y_filtered = filter(Rep, 1, y);
+sound(y_filtered, Fs);  % Listen to the filtered signal
+
+% Add white noise
+noise = 0.05 * randn(length(y_filtered), 1);
+y_noisy = y_filtered + noise;
+sound(y_noisy, Fs);  % Listen to the noisy signal
+
+% Cancel echo using LMS
+[w, y_echo_canceled, e] = algolms(y_noisy, y, length(Rep), mu);
+sound(y_echo_canceled, Fs);  % Listen to the echo-canceled signal
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
